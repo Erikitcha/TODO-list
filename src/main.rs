@@ -1,6 +1,10 @@
 fn main() {
     println!("Bem vindo ao TODO List");
-    create_todo();
+    loop{
+        if !create_todo(){
+            break
+        }   
+    }
 }
 
 fn input() -> String {
@@ -9,7 +13,7 @@ fn input() -> String {
     buf.trim().to_string()
  }
 
-fn create_todo(){
+fn create_todo() -> bool{
     println!("Gostaria de criar um novo TODO? (s/n)");
     let anwser_todo = input();
 
@@ -17,10 +21,12 @@ fn create_todo(){
         println!("Qual TODO gostaria de criar?");
         let todo_user: String = input();
         println!("TODO: {}", todo_user);
-        return main();
+        true
     } else if anwser_todo == "n" || anwser_todo == "N"{
         println!("OK!");
+        false
     } else {
-        return println!("Entrada inválida! Tente novamente com a resposta s/n!");
+        println!("Entrada inválida! Tente novamente com a resposta s/n!");
+        true
     }
 }
