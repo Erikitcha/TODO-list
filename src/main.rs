@@ -1,10 +1,6 @@
 fn main() {
     println!("Bem vindo ao TODO List");
-    loop{
-        if !create_todo(){
-            break
-        }   
-    }
+    while create_todo() {}
 }
 
 fn input() -> String {
