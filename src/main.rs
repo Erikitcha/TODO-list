@@ -19,7 +19,7 @@ fn create_todo() -> bool{
 
     if anwser_todo == "s"{
         println!("Qual TODO gostaria de criar?");
-        let todo_user: String = input();
+        let todo_user = input();
         println!("TODO: {}", todo_user);
         true
     } else if anwser_todo == "n"{
