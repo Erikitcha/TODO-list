@@ -15,14 +15,14 @@ fn input() -> String {
 
 fn create_todo() -> bool{
     println!("Gostaria de criar um novo TODO? (s/n)");
-    let anwser_todo = input();
+    let anwser_todo = input().to_ascii_lowercase();
 
-    if anwser_todo == "s" || anwser_todo == "S"{
+    if anwser_todo == "s"{
         println!("Qual TODO gostaria de criar?");
         let todo_user: String = input();
         println!("TODO: {}", todo_user);
         true
-    } else if anwser_todo == "n" || anwser_todo == "N"{
+    } else if anwser_todo == "n"{
         println!("OK!");
         false
     } else {
