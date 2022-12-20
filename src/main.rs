@@ -2,7 +2,9 @@ use std::io::{Stdin, Stdout, Write};
 
 fn main() {
     println!("Bem vindo ao TODO List");
-    while create_todo() {}
+    loop {
+        create_todo()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +44,7 @@ impl Terminal {
     }
 }
 
-fn create_todo() -> bool {
+fn create_todo() {
     let mut terminal = Terminal::new();
     println!("Gostaria de criar um novo TODO? (s/n)");
 
@@ -54,12 +56,10 @@ fn create_todo() -> bool {
 
         let new_anwser = terminal.ask_for_new_todo();
         terminal.show_todo(&new_anwser);
-        true
     } else if anwser == "n" {
         println!("OK Finalizando o programa!");
         std::process::exit(0)
     } else {
         println!("Entrada inválida! Tente novamente com a resposta s/n!");
-        true
     }
 }
