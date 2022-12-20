@@ -3,7 +3,14 @@ use std::io::{Stdin, Stdout, Write};
 fn main() {
     println!("Bem vindo ao TODO List");
     loop {
-        create_todo()
+        println!("Gostaria de criar um novo TODO? (s/n)");
+        let mut terminal = Terminal::new();
+        let can_create = terminal.should_create_todo();
+
+        if can_create {
+            let anwser = terminal.ask_for_new_todo();
+            terminal.show_todo(&anwser);
+        }
     }
 }
 
@@ -59,16 +66,5 @@ impl Terminal {
 
     fn show_todo(&mut self, todo: &Todo) {
         writeln!(self.stdout, "Sua mensagem: {}", todo.message).unwrap();
-    }
-}
-
-fn create_todo() {
-    println!("Gostaria de criar um novo TODO? (s/n)");
-    let mut terminal = Terminal::new();
-    let can_create = terminal.should_create_todo();
-
-    if can_create {
-        let anwser = terminal.ask_for_new_todo();
-        terminal.show_todo(&anwser);
     }
 }
