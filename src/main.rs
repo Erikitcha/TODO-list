@@ -1,3 +1,5 @@
+use std::io::{Stdin, Stdout, Write};
+
 fn main() {
     println!("Bem vindo ao TODO List");
     while create_todo() {}
@@ -7,8 +9,6 @@ fn main() {
 struct Todo {
     message: String,
 }
-
-use std::io::{Stdin, Stdout, Write};
 
 impl Todo {
     pub fn new(message: String) -> Todo {
@@ -24,8 +24,8 @@ struct Terminal {
 impl Terminal {
     fn new() -> Terminal {
         Terminal {
-            stdin: (std::io::stdin()),
-            stdout: (std::io::stdout()),
+            stdin: std::io::stdin(),
+            stdout: std::io::stdout(),
         }
     }
 
@@ -34,7 +34,7 @@ impl Terminal {
         self.stdin.read_line(&mut buf).unwrap();
         let input = buf.trim().to_string();
 
-        return Todo::new(input);
+        Todo::new(input)
     }
 
     fn show_todo(&mut self, todo: &Todo) {
