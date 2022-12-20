@@ -5,14 +5,14 @@ fn main() {
 
 #[derive(Debug, Clone)]
 struct Todo {
-    message: String
+    message: String,
 }
 
 use std::io::{Stdin, Stdout, Write};
 
-impl Todo{
-    pub fn new(message: String) -> Self{
-        Self{message}
+impl Todo {
+    pub fn new(message: String) -> Todo {
+        Todo { message }
     }
 }
 
@@ -22,50 +22,42 @@ struct Terminal {
 }
 
 impl Terminal {
-    fn new() -> Self {
-        // Faça a lógica para construir o Terminal. Nesse caso, você precisará criar uma
-        // instância de `Stdin` e `Stdout`. Para isso, utilize as funções:
-        //
-        // - `std::io::stdin()`
-        // - `std::io::stdout()`
+    fn new() -> Terminal {
+        Terminal {
+            stdin: (std::io::stdin()),
+            stdout: (std::io::stdout()),
+        }
     }
 
     fn ask_for_new_todo(&mut self) -> Todo {
-        // Faça a sua lógica para ler a mensagem que será utilizada para construir o
-        // `Todo`.
-        //
-        // Para implementar essa função, você poderá aproveitar parte da lógica da
-        // função `input` que apresentamos no projeto anterior. Porém, ao invés de
-        // chamar `std::io::stdin()` para invocar o método `.read_line()`, você poderá
-        // usar a instância de `Stdin` que já está no próprio terminal. Para isso, você
-        // pode fazer `self.stdin.read_line(...)`.
+        let mut buf = String::new();
+        self.stdin.read_line(&mut buf).unwrap();
+        let input = buf.trim().to_string();
+
+        return Todo::new(input);
     }
 
     fn show_todo(&mut self, todo: &Todo) {
-        // Faça a sua lógica de impressão aqui. Você poderá usar o macro `writeln!` para
-        // isso, por exemplo:
         writeln!(self.stdout, "Sua mensagem: {}", todo.message).unwrap();
     }
 }
 
-fn input() -> String {
-    let mut buf = String::new();
-    std::io::stdin().read_line(&mut buf).unwrap();
-    buf.trim().to_string()
-}
-
 fn create_todo() -> bool {
+    let mut terminal = Terminal::new();
     println!("Gostaria de criar um novo TODO? (s/n)");
-    let anwser_todo = input().to_ascii_lowercase();
 
-    if anwser_todo == "s" {
+    let todo = terminal.ask_for_new_todo();
+    let anwser: String = todo.message;
+
+    if anwser == "s" {
         println!("Qual TODO gostaria de criar?");
-        let todo_user = input();
-        println!("TODO: {}", todo_user);
+
+        let new_anwser = terminal.ask_for_new_todo();
+        terminal.show_todo(&new_anwser);
         true
-    } else if anwser_todo == "n" {
-        println!("OK!");
-        false
+    } else if anwser == "n" {
+        println!("OK Finalizando o programa!");
+        std::process::exit(0)
     } else {
         println!("Entrada inválida! Tente novamente com a resposta s/n!");
         true
