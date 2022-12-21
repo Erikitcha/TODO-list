@@ -5,12 +5,14 @@ fn main() {
     loop {
         println!("Gostaria de criar um novo TODO? (s/n)");
         let mut terminal = Terminal::new();
-        let can_create = terminal.should_create_todo();
 
-        if can_create {
-            let anwser = terminal.ask_for_new_todo();
-            terminal.show_todo(&anwser);
+        if !terminal.should_create_todo() {
+            println!("OK Finalizando o programa!");
+            break;
         }
+
+        let anwser = terminal.ask_for_new_todo();
+        terminal.show_todo(&anwser);
     }
 }
 
@@ -39,23 +41,22 @@ impl Terminal {
     }
 
     fn should_create_todo(&mut self) -> bool {
-        let mut buf = String::new();
-        self.stdin.read_line(&mut buf).unwrap();
-        let input = buf.trim().to_string();
+        loop {
+            let mut buf = String::new();
+            self.stdin.read_line(&mut buf).unwrap();
+            let input = buf.trim().to_string();
 
-        if input == "s" {
-            true
-        } else if input == "n" {
-            println!("OK Finalizando o programa!");
-            std::process::exit(0);
-        } else {
-            println!("Entrada inválida! Tente novamente com a resposta s/n!");
-            false
+            if input == "s" {
+                return true;
+            } else if input == "n" {
+                return false;
+            } else {
+                writeln!(self.stdout, "Entrada inválida! Tente novamente com a resposta s ou n!").unwrap();
+            }
         }
     }
 
     fn ask_for_new_todo(&mut self) -> Todo {
-       
         let mut buf = String::new();
         writeln!(self.stdout, "Qual TODO gostaria de criar?").unwrap();
         self.stdin.read_line(&mut buf).unwrap();
