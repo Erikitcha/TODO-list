@@ -55,9 +55,9 @@ impl Terminal {
     }
 
     fn ask_for_new_todo(&mut self) -> Todo {
-        println!("Qual TODO gostaria de criar?");
-
+       
         let mut buf = String::new();
+        writeln!(self.stdout, "Qual TODO gostaria de criar?").unwrap();
         self.stdin.read_line(&mut buf).unwrap();
         let input = buf.trim().to_string();
 
