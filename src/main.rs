@@ -1,4 +1,7 @@
-use std::io::{Stdin, Stdout, Write};
+use std::{
+    error::Error,
+    io::{ErrorKind, Stdin, Stdout, Write},
+};
 
 fn main() {
     println!("Bem vindo ao TODO List");
@@ -6,9 +9,17 @@ fn main() {
         println!("Gostaria de criar um novo TODO? (s/n)");
         let mut terminal = Terminal::new();
 
-        if !terminal.should_create_todo() {
-            println!("OK Finalizando o programa!");
-            break;
+        match terminal.should_create_todo() {
+            Ok(should_create) =>{
+                if !should_create{
+                    println!("OK Finalizando o programa!");
+                    break;
+                }
+            }
+            Err(error) => {
+                println!("{}", show_error(error));
+                continue;
+            }
         }
 
         let anwser = terminal.ask_for_new_todo();
@@ -27,6 +38,11 @@ impl Todo {
     }
 }
 
+enum TerminalError {
+    Stdin(std::io::Error),
+    Stdout(std::io::Error),
+}
+
 struct Terminal {
     stdin: Stdin,
     stdout: Stdout,
@@ -40,18 +56,21 @@ impl Terminal {
         }
     }
 
-    fn should_create_todo(&mut self) -> bool {
+    fn should_create_todo(&mut self) -> Result<bool, TerminalError> {
         loop {
             let mut buf = String::new();
             self.stdin.read_line(&mut buf).unwrap();
             let input = buf.trim().to_string();
 
             if input == "s" {
-                return true;
+                return Ok(true);
             } else if input == "n" {
-                return false;
+                return Ok(false);
             } else {
-                writeln!(self.stdout, "Entrada inválida! Tente novamente com a resposta s ou n!").unwrap();
+                return Err(TerminalError::Stdin(std::io::Error::new(
+                    ErrorKind::Other,
+                    "Entrada inválida, tente novamente com s/n!",
+                )));
             }
         }
     }
@@ -67,5 +86,13 @@ impl Terminal {
 
     fn show_todo(&mut self, todo: &Todo) {
         writeln!(self.stdout, "Sua mensagem: {}", todo.message).unwrap();
+    }
+}
+
+fn show_error(error: TerminalError) -> String{
+    
+    match error {
+        TerminalError::Stdin(error) => format!("Erro de entrada: {}", error),
+        TerminalError::Stdout(error) => format!("Erro de saída: {}", error)
     }
 }
