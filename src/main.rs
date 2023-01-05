@@ -59,7 +59,12 @@ impl Terminal {
     fn should_create_todo(&mut self) -> Result<bool, TerminalError> {
         loop {
             let mut buf = String::new();
-            self.stdin.read_line(&mut buf).unwrap();
+
+            match self.stdin.read_line(&mut buf) {
+                Ok(_) => (),
+                Err(error) => return Err(TerminalError::Stdin(error)),
+            }
+
             let input = buf.trim().to_string();
 
             if input == "s" {
