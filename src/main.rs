@@ -22,8 +22,12 @@ fn main() {
             }
         }
 
-        let anwser = terminal.ask_for_new_todo();
-        terminal.show_todo(&anwser);
+        match terminal.ask_for_new_todo(){
+            Ok(new_todo) => terminal.show_todo(&new_todo),
+            Err(error) => {
+                println!("{}", show_error(error));
+            }
+        }
     }
 }
 
@@ -73,20 +77,25 @@ impl Terminal {
                 return Ok(false);
             } else {
                 return Err(TerminalError::Stdin(std::io::Error::new(
-                    ErrorKind::Other,
+                    ErrorKind::InvalidInput,
                     "Entrada inválida, tente novamente com s/n!",
                 )));
             }
         }
     }
 
-    fn ask_for_new_todo(&mut self) -> Todo {
+    fn ask_for_new_todo(&mut self) -> Result<Todo, TerminalError> {
         let mut buf = String::new();
         writeln!(self.stdout, "Qual TODO gostaria de criar?").unwrap();
-        self.stdin.read_line(&mut buf).unwrap();
+        
+        match self.stdin.read_line(&mut buf) {
+            Ok(_) => (),
+            Err(error) => return Err(TerminalError::Stdin(error)),
+        }
+
         let input = buf.trim().to_string();
 
-        Todo::new(input)
+        return Ok(Todo::new(input));
     }
 
     fn show_todo(&mut self, todo: &Todo) {
