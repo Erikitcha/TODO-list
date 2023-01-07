@@ -1,7 +1,4 @@
-use std::{
-    error::Error,
-    io::{ErrorKind, Stdin, Stdout, Write},
-};
+use std::io::{ErrorKind, Stdin, Stdout, Write};
 
 fn main() {
     println!("Bem vindo ao TODO List");
@@ -10,8 +7,8 @@ fn main() {
         let mut terminal = Terminal::new();
 
         match terminal.should_create_todo() {
-            Ok(should_create) =>{
-                if !should_create{
+            Ok(should_create) => {
+                if !should_create {
                     println!("OK Finalizando o programa!");
                     break;
                 }
@@ -22,8 +19,12 @@ fn main() {
             }
         }
 
-        match terminal.ask_for_new_todo(){
-            Ok(new_todo) => terminal.show_todo(&new_todo),
+        match terminal.ask_for_new_todo() {
+            Ok(Some(new_todo)) => match terminal.show_todo(&new_todo) {
+                Ok(()) => println!("TODO inserido com sucesso!"),
+                Err(error) => println!("Erro ao exibir a mensagem TODO: {}", show_error(error)),
+            },
+            Ok(None) => continue,
             Err(error) => {
                 println!("{}", show_error(error));
             }
@@ -84,29 +85,33 @@ impl Terminal {
         }
     }
 
-    fn ask_for_new_todo(&mut self) -> Result<Todo, TerminalError> {
+    fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError> {
         let mut buf = String::new();
-        writeln!(self.stdout, "Qual TODO gostaria de criar?").unwrap();
-        
-        match self.stdin.read_line(&mut buf) {
+        match writeln!(self.stdout, "Qual TODO gostaria de criar?") {
             Ok(_) => (),
-            Err(error) => return Err(TerminalError::Stdin(error)),
+            Err(error) => return Err(TerminalError::Stdout(error)),
         }
 
-        let input = buf.trim().to_string();
-
-        return Ok(Todo::new(input));
+        match self.stdin.read_line(&mut buf) {
+            Ok(_) => {
+                let input = buf.trim().to_string();
+                Ok(Some(Todo::new(input)))
+            }
+            Err(error) => Err(TerminalError::Stdin(error)),
+        }
     }
 
-    fn show_todo(&mut self, todo: &Todo) {
-        writeln!(self.stdout, "Sua mensagem: {}", todo.message).unwrap();
+    fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
+        match writeln!(self.stdout, "Sua mensagem: {}", todo.message) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(TerminalError::Stdout(error)),
+        }
     }
 }
 
-fn show_error(error: TerminalError) -> String{
-    
+fn show_error(error: TerminalError) -> String {
     match error {
         TerminalError::Stdin(error) => format!("Erro de entrada: {}", error),
-        TerminalError::Stdout(error) => format!("Erro de saída: {}", error)
+        TerminalError::Stdout(error) => format!("Erro de saída: {}", error),
     }
 }
