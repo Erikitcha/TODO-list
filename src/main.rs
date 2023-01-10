@@ -1,4 +1,4 @@
-use std::io::{ErrorKind, Stdin, Stdout, Write};
+use std::io::{Stdin, Stdout, Write};
 
 fn main() {
     println!("Bem vindo ao TODO List");
@@ -41,7 +41,7 @@ impl TerminalError {
         match self {
             TerminalError::Stdin(error) => format!("Erro de entrada: {}", error),
             TerminalError::Stdout(error) => format!("Erro de saída: {}", error),
-            TerminalError::InvalidInput => format!("Entrada inválida!\nTente novamente com s/n!"),
+            TerminalError::InvalidInput => format!("Entrada inválida!\nTente novamente com s/n!")
         }
     }
 }
@@ -79,30 +79,27 @@ impl Terminal {
     }
 
     fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError> {
-        
         match self.should_create_todo() {
             Ok(should_create) => {
                 if !should_create {
                     return Ok(None);
+                } else {
+                    let mut buf = String::new();
+                    writeln!(self.stdout, "Qual TODO gostaria de criar?")
+                        .map_err(|error| TerminalError::Stdout(error))?;
+
+                    match self.stdin.read_line(&mut buf) {
+                        Ok(_) => {
+                            let input = buf.trim().to_string();
+                            Ok(Some(Todo::new(input)))
+                        }
+                        Err(error) => Err(TerminalError::Stdin(error)),
+                    }
                 }
             }
-            Err(error) => {
-                println!("{}", error.show_error());
-            }
+            Err(error) => Err(error)
         }
-
-        let mut buf = String::new();
-        writeln!(self.stdout, "Qual TODO gostaria de criar?")
-            .map_err(|error| TerminalError::Stdout(error))?;
-
-        match self.stdin.read_line(&mut buf) {
-            Ok(_) => {
-                let input = buf.trim().to_string();
-                Ok(Some(Todo::new(input)))
-            }
-            Err(error) => Err(TerminalError::Stdin(error)),
-         }
-        }
+    }
 
     fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
         writeln!(self.stdout, "Sua mensagem: {}", todo.message)
