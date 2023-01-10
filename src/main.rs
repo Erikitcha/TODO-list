@@ -6,25 +6,12 @@ fn main() {
         println!("Gostaria de criar um novo TODO? (s/n)");
         let mut terminal = Terminal::new();
 
-        match terminal.should_create_todo() {
-            Ok(should_create) => {
-                if !should_create {
-                    println!("OK Finalizando o programa!");
-                    break;
-                }
-            }
-            Err(error) => {
-                println!("{}", error.show_error());
-                continue;
-            }
-        }
-
         match terminal.ask_for_new_todo() {
             Ok(Some(new_todo)) => match terminal.show_todo(&new_todo) {
                 Ok(()) => println!("TODO inserido com sucesso!"),
                 Err(error) => println!("Erro ao exibir a mensagem TODO: {}", error.show_error()),
             },
-            Ok(None) => continue,
+            Ok(None) => break,
             Err(error) => {
                 println!("{}", error.show_error());
             }
@@ -92,6 +79,18 @@ impl Terminal {
     }
 
     fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError> {
+        
+        match self.should_create_todo() {
+            Ok(should_create) => {
+                if !should_create {
+                    return Ok(None);
+                }
+            }
+            Err(error) => {
+                println!("{}", error.show_error());
+            }
+        }
+
         let mut buf = String::new();
         writeln!(self.stdout, "Qual TODO gostaria de criar?")
             .map_err(|error| TerminalError::Stdout(error))?;
@@ -102,8 +101,8 @@ impl Terminal {
                 Ok(Some(Todo::new(input)))
             }
             Err(error) => Err(TerminalError::Stdin(error)),
+         }
         }
-    }
 
     fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
         writeln!(self.stdout, "Sua mensagem: {}", todo.message)
