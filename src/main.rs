@@ -14,7 +14,7 @@ fn main() {
                 }
             }
             Err(error) => {
-                println!("{}", show_error(error));
+                println!("{}", error.show_error());
                 continue;
             }
         }
@@ -22,11 +22,11 @@ fn main() {
         match terminal.ask_for_new_todo() {
             Ok(Some(new_todo)) => match terminal.show_todo(&new_todo) {
                 Ok(()) => println!("TODO inserido com sucesso!"),
-                Err(error) => println!("Erro ao exibir a mensagem TODO: {}", show_error(error)),
+                Err(error) => println!("Erro ao exibir a mensagem TODO: {}", error.show_error()),
             },
             Ok(None) => continue,
             Err(error) => {
-                println!("{}", show_error(error));
+                println!("{}", error.show_error());
             }
         }
     }
@@ -46,6 +46,17 @@ impl Todo {
 enum TerminalError {
     Stdin(std::io::Error),
     Stdout(std::io::Error),
+    InvalidInput,
+}
+
+impl TerminalError {
+    fn show_error(&self) -> String {
+        match self {
+            TerminalError::Stdin(error) => format!("Erro de entrada: {}", error),
+            TerminalError::Stdout(error) => format!("Erro de saída: {}", error),
+            TerminalError::InvalidInput => format!("Entrada inválida!\nTente novamente com s/n!"),
+        }
+    }
 }
 
 struct Terminal {
@@ -65,11 +76,9 @@ impl Terminal {
         loop {
             let mut buf = String::new();
 
-            match self.stdin.read_line(&mut buf) {
-                Ok(_) => (),
-                Err(error) => return Err(TerminalError::Stdin(error)),
-            }
-
+            self.stdin
+                .read_line(&mut buf)
+                .map_err(|error| TerminalError::Stdin(error))?;
             let input = buf.trim().to_string();
 
             if input == "s" {
@@ -77,20 +86,15 @@ impl Terminal {
             } else if input == "n" {
                 return Ok(false);
             } else {
-                return Err(TerminalError::Stdin(std::io::Error::new(
-                    ErrorKind::InvalidInput,
-                    "Entrada inválida, tente novamente com s/n!",
-                )));
+                return Err(TerminalError::InvalidInput);
             }
         }
     }
 
     fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError> {
         let mut buf = String::new();
-        match writeln!(self.stdout, "Qual TODO gostaria de criar?") {
-            Ok(_) => (),
-            Err(error) => return Err(TerminalError::Stdout(error)),
-        }
+        writeln!(self.stdout, "Qual TODO gostaria de criar?")
+            .map_err(|error| TerminalError::Stdout(error))?;
 
         match self.stdin.read_line(&mut buf) {
             Ok(_) => {
@@ -102,16 +106,8 @@ impl Terminal {
     }
 
     fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
-        match writeln!(self.stdout, "Sua mensagem: {}", todo.message) {
-            Ok(_) => Ok(()),
-            Err(error) => Err(TerminalError::Stdout(error)),
-        }
-    }
-}
-
-fn show_error(error: TerminalError) -> String {
-    match error {
-        TerminalError::Stdin(error) => format!("Erro de entrada: {}", error),
-        TerminalError::Stdout(error) => format!("Erro de saída: {}", error),
+        writeln!(self.stdout, "Sua mensagem: {}", todo.message)
+            .map(|_| ())
+            .map_err(|error| TerminalError::Stdout(error))
     }
 }
