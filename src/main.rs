@@ -1,6 +1,5 @@
 use std::io::{Stdin, Stdout, Write};
 
-
 fn main() {
     let mut terminal = Terminal::new();
 
@@ -55,7 +54,8 @@ impl Terminal {
             let new_todo = self.ask_for_new_todo()?;
             if let Some(new_todo) = new_todo {
                 self.show_todo(&new_todo)?;
-                println!("TODO inserido com sucesso!");
+                writeln!(self.stdout, "TODO inserido com sucesso!")
+                    .map_err(|error| TerminalError::Stdout(error))?;
             } else {
                 break;
             }
@@ -66,17 +66,17 @@ impl Terminal {
     fn should_create_todo(&mut self) -> Result<bool, TerminalError> {
         loop {
             writeln!(self.stdout, "Deseja criar um TODO? (s/n)")
-            .map_err(|error| TerminalError::Stdout(error))?;
+                .map_err(|error| TerminalError::Stdout(error))?;
 
             let input = self.read_input()?;
 
-            if input == "s" {
-                return Ok(true);
-            } else if input == "n" {
-                return Ok(false);
-            } else {
-                println!("Entrada inválida!\nTente novamente com s/n!");
-                continue;
+            match input.as_str() {
+                "s" => return Ok(true),
+                "n" => return Ok(false),
+                _ => {
+                    writeln!(self.stdout, "Entrada inválida.")
+                        .map_err(|error| TerminalError::Stdout(error))?;
+                }
             }
         }
     }
@@ -87,7 +87,7 @@ impl Terminal {
         }
         writeln!(self.stdout, "Qual TODO gostaria de criar?")
             .map_err(|error| TerminalError::Stdout(error))?;
-    
+
         let input = self.read_input()?;
         Ok(Some(Todo::new(input)))
     }
@@ -99,11 +99,11 @@ impl Terminal {
 
     fn read_input(&mut self) -> Result<String, TerminalError> {
         let mut buf = String::new();
-    
-        self.stdin.read_line(&mut buf)
+
+        self.stdin
+            .read_line(&mut buf)
             .map_err(|error| TerminalError::Stdin(error))?;
-    
+
         return Ok(buf.trim().to_string());
     }
-
 }
