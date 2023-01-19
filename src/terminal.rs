@@ -50,10 +50,9 @@ impl Terminal {
                 )
                 .map_err(TerminalError::Stdout)?;
             } else {
-                break;
+                return Ok(());
             }
         }
-        Ok(())
     }
 
     fn should_create_todo(&mut self) -> Result<bool, TerminalError> {
