@@ -1,7 +1,7 @@
 use crate::terminal::Terminal;
 use console::style;
 mod todo;
-
+mod todos;
 mod terminal;
 
 fn main() {

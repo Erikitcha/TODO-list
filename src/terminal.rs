@@ -1,11 +1,23 @@
-use crate::todo::Todo;
+use crate::{todo::Todo, todos::Todos};
 use console::style;
 use console::Emoji;
+use std::collections::HashMap;
 use std::io::{Stdin, Stdout, Write};
 
 pub enum TerminalError {
     Stdin(std::io::Error),
     Stdout(std::io::Error),
+    InvalidOption,
+}
+
+#[derive(Copy, Clone)]
+pub enum UserOption {
+    NewTodo,
+    RemoveTodo,
+    ShowList,
+    ShowTodo,
+    RemoveAllTodos,
+    Quit
 }
 
 impl TerminalError {
@@ -13,6 +25,7 @@ impl TerminalError {
         match self {
             TerminalError::Stdin(error) => format!("Erro de entrada: {}", style(error).red()),
             TerminalError::Stdout(error) => format!("Erro de saída: {}", style(error).red()),
+            TerminalError::InvalidOption => format!("Erro de entrada: {}", style("Opção digitada invalida").red()),
         }
     }
 }
@@ -37,6 +50,8 @@ impl Terminal {
             Emoji("🌈", "")
         )
         .map_err(TerminalError::Stdout)?;
+
+
 
         loop {
             let new_todo = self.ask_for_new_todo()?;
@@ -116,5 +131,34 @@ impl Terminal {
             .map_err(TerminalError::Stdin)?;
 
         Ok(buf.trim().to_string())
+    }
+   
+    fn show_menu(&mut self) -> Result<(), TerminalError> {
+        writeln!(self.stdout, "1 - Adicionar novo Todo \n 2 - Remover Todo \n 3 - Listar Todo \n4 - Listar Todos \n5 - Esvaziar lista \n 6 - Sair").map(|_| ())
+        .map_err(TerminalError::Stdout);
+        Ok(())
+    }
+
+    fn option_map(&mut self) -> HashMap<usize, UserOption>{
+        let mut option_map = HashMap::new();
+
+        option_map.insert(1, UserOption::NewTodo);
+        option_map.insert(2, UserOption::RemoveTodo);
+        option_map.insert(3, UserOption::ShowList);
+        option_map.insert(4, UserOption::ShowTodo);
+        option_map.insert(5, UserOption::RemoveAllTodos);
+        option_map.insert(6, UserOption::Quit);
+        option_map
+    }
+
+    fn select_option(&mut self) -> Result<UserOption, TerminalError> {
+        let input = self.read_input()?;
+        match input.parse::<usize>() {
+            Ok(parsed_input) => match self.option_map().get(&parsed_input) {
+                Some(user_option) => Ok(user_option.clone()),
+                None => Err(TerminalError::InvalidOption)
+            },
+            Err(_) => Err(TerminalError::InvalidOption)
+        }   
     }
 }
