@@ -3,29 +3,31 @@ use crate::todo::Todo;
 #[derive(Debug, Clone)]
 
 pub struct Todos {
-    pub todos: Vec<Todo>,
+    pub list: Vec<Todo>,
 }
 
 impl Todos {
     pub fn new(max_todos: i8) -> Todos {
         Todos {
-            todos: Vec::with_capacity(5),
+            list: Vec::with_capacity(5),
         }
     }
 
     pub fn add_todo(&mut self, todo: Todo) {
-        self.todos.push(todo);
+        self.list.push(todo);
     }
 
     pub fn remove_todo(&mut self, index: usize) {
-        self.todos.remove(index);
+        self.list.remove(index);
     }
 
     pub fn get_todo(&mut self, index: usize) -> &Todo {
-        return self.todos.get(index).unwrap();
+        return self.list.get(index).unwrap();
     }
 
-    /*pub fn remove_all_todos(&mut self){
-        self.todos.   
-    }*/
+    pub fn remove_all_todos(&mut self){
+        for todo in 0..self.list.len() {
+            self.list.pop();
+        }
+    }
 }

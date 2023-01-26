@@ -15,9 +15,8 @@ pub enum UserOption {
     NewTodo,
     RemoveTodo,
     ShowList,
-    ShowTodo,
     RemoveAllTodos,
-    Quit
+    Quit,
 }
 
 impl TerminalError {
@@ -25,13 +24,18 @@ impl TerminalError {
         match self {
             TerminalError::Stdin(error) => format!("Erro de entrada: {}", style(error).red()),
             TerminalError::Stdout(error) => format!("Erro de saída: {}", style(error).red()),
-            TerminalError::InvalidOption => format!("Erro de entrada: {}", style("Opção digitada invalida").red()),
+            TerminalError::InvalidOption => format!(
+                "Erro de entrada: {}",
+                style("Opção digitada invalida").red()
+            ),
         }
     }
 }
 pub struct Terminal {
     stdin: Stdin,
     stdout: Stdout,
+
+    todos: Todos,
 }
 
 impl Terminal {
@@ -39,6 +43,8 @@ impl Terminal {
         Terminal {
             stdin: std::io::stdin(),
             stdout: std::io::stdout(),
+
+            todos: Todos::new(5),
         }
     }
 
@@ -51,58 +57,49 @@ impl Terminal {
         )
         .map_err(TerminalError::Stdout)?;
 
-
-
         loop {
-            let new_todo = self.ask_for_new_todo()?;
-            if let Some(new_todo) = new_todo {
-                self.show_todo(&new_todo)?;
-                writeln!(
-                    self.stdout,
-                    "{} {}",
-                    style("TODO inserido com sucesso!").cyan(),
-                    Emoji("🥳", "")
-                )
-                .map_err(TerminalError::Stdout)?;
-            } else {
-                return Ok(());
-            }
-        }
-    }
+            self.show_menu()?;
+            let user_option = self.select_index()?;
+            match user_option {
+                UserOption::NewTodo => {
+                    let new_todo = self.ask_for_new_todo()?;
 
-    fn should_create_todo(&mut self) -> Result<bool, TerminalError> {
-        loop {
-            writeln!(
-                self.stdout,
-                "{}? ({}/{})",
-                style("Deseja criar um novo TODO").magenta(),
-                style("s").green(),
-                style("n").red()
-            )
-            .map_err(TerminalError::Stdout)?;
+                    if let Some(new_todo) = new_todo {
+                        self.todos.add_todo(new_todo.clone());
 
-            let input = self.read_input()?;
+                        self.show_todo(&new_todo)?;
+                        writeln!(
+                            self.stdout,
+                            "{} {}",
+                            style("TODO inserido com sucesso!\n").cyan(),
+                            Emoji("🥳", "")
+                        )
+                        .map_err(TerminalError::Stdout)?;
+                    }
+                }
+                UserOption::RemoveTodo => {
+                    println!("Qual TODO gostaria de remover?");
+                    self.show_todos(String::new())?;
 
-            match input.as_str() {
-                "s" => return Ok(true),
-                "n" => return Ok(false),
-                _ => {
-                    writeln!(
-                        self.stdout,
-                        "{} {}",
-                        style("Entrada inválida").red(),
-                        Emoji("🤯", "")
-                    )
-                    .map_err(TerminalError::Stdout)?;
+                    let input = self.read_input()?;
+                    self.todos.remove_todo(input.parse::<usize>().unwrap());
+                    println!("Todo removido com sucesso!\n")
+                }
+                UserOption::RemoveAllTodos => {
+                    self.show_todos("Removendo todos os todos: ".to_owned())?;
+                    self.todos.remove_all_todos();
+                }
+                UserOption::ShowList => {
+                    self.show_todos("Exibindo todos os todos: ".to_owned())?;
+                }
+                UserOption::Quit => {
+                    return Ok(());
                 }
             }
         }
     }
 
     fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError> {
-        if !self.should_create_todo()? {
-            return Ok(None);
-        }
         writeln!(
             self.stdout,
             "{}",
@@ -113,6 +110,7 @@ impl Terminal {
         let input = self.read_input()?;
         Ok(Some(Todo::new(input)))
     }
+
     fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
         writeln!(
             self.stdout,
@@ -121,6 +119,28 @@ impl Terminal {
         )
         .map(|_| ())
         .map_err(TerminalError::Stdout)
+    }
+
+    fn show_todos(&mut self, prefix: String) -> Result<(), TerminalError> {
+        let current_elements = self.todos.list.len();
+        let mut message = String::from(prefix);
+
+        if current_elements == 0{
+            let empty_prefix = "lista vazia".to_owned();
+            message.clear();
+            message.push_str(&empty_prefix);
+        }
+
+        for todo in 0..current_elements{
+            message.push_str(&format!("{} - {}, ", todo, self.todos.get_todo(todo).message))
+        }
+        writeln!(
+            self.stdout,
+            "{}",
+            style(message).yellow().bold(),
+        )
+        .map_err(TerminalError::Stdout)?;
+        Ok(())
     }
 
     fn read_input(&mut self) -> Result<String, TerminalError> {
@@ -132,33 +152,43 @@ impl Terminal {
 
         Ok(buf.trim().to_string())
     }
-   
+
     fn show_menu(&mut self) -> Result<(), TerminalError> {
-        writeln!(self.stdout, "1 - Adicionar novo Todo \n 2 - Remover Todo \n 3 - Listar Todo \n4 - Listar Todos \n5 - Esvaziar lista \n 6 - Sair").map(|_| ())
-        .map_err(TerminalError::Stdout);
-        Ok(())
+        writeln!(
+            self.stdout,
+            "{}",
+            style("1 - Adicionar novo Todo \n2 - Remover Todo \n3 - Listar Todos \n4 - Esvaziar lista \n5 - Sair").green()
+        )
+        .map(|_| ())
+        .map_err(TerminalError::Stdout)
     }
 
-    fn option_map(&mut self) -> HashMap<usize, UserOption>{
+    fn option_map(&mut self) -> HashMap<usize, UserOption> {
         let mut option_map = HashMap::new();
 
         option_map.insert(1, UserOption::NewTodo);
         option_map.insert(2, UserOption::RemoveTodo);
         option_map.insert(3, UserOption::ShowList);
-        option_map.insert(4, UserOption::ShowTodo);
-        option_map.insert(5, UserOption::RemoveAllTodos);
-        option_map.insert(6, UserOption::Quit);
-        option_map
+        option_map.insert(4, UserOption::RemoveAllTodos);
+        option_map.insert(5, UserOption::Quit);
+
+        return option_map;
     }
 
-    fn select_option(&mut self) -> Result<UserOption, TerminalError> {
+    fn select_index(&mut self) -> Result<UserOption, TerminalError> {
         let input = self.read_input()?;
+
         match input.parse::<usize>() {
-            Ok(parsed_input) => match self.option_map().get(&parsed_input) {
-                Some(user_option) => Ok(user_option.clone()),
-                None => Err(TerminalError::InvalidOption)
-            },
-            Err(_) => Err(TerminalError::InvalidOption)
-        }   
+            Ok(parsed_input) => {
+                if parsed_input > self.todos.list.capacity() + 1 || parsed_input < 1 {
+                    return Err(TerminalError::InvalidOption);
+                }
+                match self.option_map().get(&parsed_input) {
+                    Some(user_option) => Ok(user_option.clone()),
+                    None => Err(TerminalError::InvalidOption),
+                }
+            }
+            Err(_) => Err(TerminalError::InvalidOption),
+        }
     }
 }
