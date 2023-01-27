@@ -237,5 +237,4 @@ impl Terminal {
         println!("OK Finalizando o programa!");
         std::process::exit(0);
     }
-
 }

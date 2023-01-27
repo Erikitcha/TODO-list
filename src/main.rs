@@ -10,10 +10,4 @@ fn main() {
     if let Err(error) = terminal.run() {
         println!("{}", style(error.show_error()).red());
     }
-
-    /*match terminal.select_option(){
-        Ok(value) => println!("{}", value),
-        Err(_) => println!("fudeu"),
-
-    }*/
 }
