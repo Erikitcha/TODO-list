@@ -7,9 +7,9 @@ pub struct Todos {
 }
 
 impl Todos {
-    pub fn new(max_todos: i8) -> Todos {
+    pub fn new() -> Todos {
         Todos {
-            list: Vec::with_capacity(5),
+            list: Vec::with_capacity(15),
         }
     }
 
@@ -21,12 +21,8 @@ impl Todos {
         self.list.remove(index);
     }
 
-    pub fn get_todo(&mut self, index: usize) -> &Todo {
-        return self.list.get(index).unwrap();
-    }
-
-    pub fn remove_all_todos(&mut self){
-        for todo in 0..self.list.len() {
+    pub fn remove_all_todos(&mut self) {
+        for _todo in 0..self.list.len() {
             self.list.pop();
         }
     }
