@@ -22,8 +22,6 @@ impl Todos {
     }
 
     pub fn remove_all_todos(&mut self) {
-        for _todo in 0..self.list.len() {
-            self.list.pop();
-        }
+        self.list.clear();
     }
 }
