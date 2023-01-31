@@ -17,14 +17,6 @@ pub enum UserOption {
     Quit,
 }
 
-const OPTIONS: [UserOption; 5] = [
-    UserOption::NewTodo,
-    UserOption::RemoveTodo,
-    UserOption::ShowList,
-    UserOption::RemoveAllTodos,
-    UserOption::Quit,
-];
-
 impl TerminalError {
     pub fn show_error(&self) -> String {
         match self {
@@ -65,7 +57,7 @@ impl Terminal {
             self.show_menu()?;
 
             match self.select_user_command() {
-                Ok(select_index) => self.user_option(select_index, &mut todos)?,
+                Ok(selected_command) => self.user_option(selected_command, &mut todos)?,
                 Err(_) => self.invalid_input()?,
             }
         }
@@ -102,12 +94,12 @@ impl Terminal {
 
     fn remove_todo(&mut self, todos: &mut Todos) -> Result<(), TerminalError> {
         if todos.list.is_empty() {
-            writeln!(self.stdout, "Lista de TODOs está vazia.").map_err(TerminalError::Stdout)?;
+            self.show_todos(todos)?;
             return Ok(());
         }
 
         println!("Qual TODO gostaria de remover?\n");
-        self.show_todos("", todos)?;
+        self.show_todos(todos)?;
 
         let selected_index = self.select_from_list(todos.clone())?;
         todos.remove_todo(selected_index);
@@ -117,14 +109,14 @@ impl Terminal {
     }
 
     fn remove_all_todos(&mut self, todos: &mut Todos) -> Result<(), TerminalError> {
-        self.show_todos("Removendo todos os TODOS: ", todos)?;
+        self.show_todos(todos)?;
 
         todos.remove_all_todos();
         Ok(())
     }
 
     fn show_list(&mut self, todos: &mut Todos) -> Result<(), TerminalError> {
-        self.show_todos("Exibindo todos os TODOS adicionados: ", todos)?;
+        self.show_todos(todos)?;
         Ok(())
     }
 
@@ -161,26 +153,27 @@ impl Terminal {
         .map_err(TerminalError::Stdout)
     }
 
-    fn show_todos(&mut self, prefix: &str, todos: &mut Todos) -> Result<(), TerminalError> {
+    fn show_todos(&mut self, todos: &mut Todos) -> Result<(), TerminalError> {
         let current_elements = todos.list.len();
-        let mut message = String::from(prefix);
 
         if current_elements == 0 {
-            let empty_prefix = "Lista de TODOs está vazia.".to_owned();
-            message.clear();
-            message.push_str(&empty_prefix);
+            writeln!(self.stdout, "{}", style("A lista está vazia!").red().bold())
+                .map_err(TerminalError::Stdout)?;
         }
 
         for (index, todo) in todos.list.iter().enumerate() {
-            message.push_str(&format!("{} - {}, ", index, todo.message));
-        }
-
-        writeln!(self.stdout, "{}", style(message).yellow().bold(),)
+            writeln!(
+                self.stdout,
+                "{} - {}, ",
+                style(index).yellow().bold(),
+                style(todo.to_owned().message).yellow().bold()
+            )
             .map_err(TerminalError::Stdout)?;
+        }
         Ok(())
     }
 
-    fn read_input(&mut self) -> Result<String, TerminalError> {
+    fn read_input(&self) -> Result<String, TerminalError> {
         let mut buf = String::new();
 
         self.stdin
@@ -200,18 +193,20 @@ impl Terminal {
         .map_err(TerminalError::Stdout)
     }
 
-
     fn select_user_command(&mut self) -> Result<UserOption, TerminalError> {
         let input = self.read_input()?;
         let parsed_input = input
             .parse::<usize>()
             .map_err(|_| TerminalError::InvalidOption)?;
 
-        if parsed_input > OPTIONS.len() || parsed_input < 1 {
-            return Err(TerminalError::InvalidOption);
+        match parsed_input {
+            1 => Ok(UserOption::NewTodo),
+            2 => Ok(UserOption::RemoveTodo),
+            3 => Ok(UserOption::ShowList),
+            4 => Ok(UserOption::RemoveAllTodos),
+            5 => Ok(UserOption::Quit),
+            _ => Err(TerminalError::InvalidOption),
         }
-
-        Ok(OPTIONS[parsed_input - 1])
     }
 
     fn select_from_list(&mut self, todos: Todos) -> Result<usize, TerminalError> {
