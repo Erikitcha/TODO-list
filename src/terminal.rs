@@ -153,10 +153,8 @@ impl Terminal {
         .map_err(TerminalError::Stdout)
     }
 
-    fn show_todos(&mut self, todos: &mut Todos) -> Result<(), TerminalError> {
-        let current_elements = todos.list.len();
-
-        if current_elements == 0 {
+    fn show_todos(&mut self, todos: &Todos) -> Result<(), TerminalError> {
+        if todos.list.is_empty() {
             writeln!(self.stdout, "{}", style("A lista está vazia!").red().bold())
                 .map_err(TerminalError::Stdout)?;
         }
@@ -193,7 +191,7 @@ impl Terminal {
         .map_err(TerminalError::Stdout)
     }
 
-    fn select_user_command(&mut self) -> Result<UserOption, TerminalError> {
+    fn select_user_command(&self) -> Result<UserOption, TerminalError> {
         let input = self.read_input()?;
         let parsed_input = input
             .parse::<usize>()
@@ -209,7 +207,7 @@ impl Terminal {
         }
     }
 
-    fn select_from_list(&mut self, todos: Todos) -> Result<usize, TerminalError> {
+    fn select_from_list(&self, todos: Todos) -> Result<usize, TerminalError> {
         let input = self.read_input()?;
         let size = todos.list.len();
         let parsed_input = input
