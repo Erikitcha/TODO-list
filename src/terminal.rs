@@ -42,7 +42,7 @@ impl Terminal {
         }
     }
 
-    pub fn run(&mut self) -> Result<(), TerminalError> {
+    pub fn run(&mut self, mut todos: Todos) -> Result<(), TerminalError> {
         let mut todos = Todos::new();
 
         writeln!(
