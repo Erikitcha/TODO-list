@@ -1,13 +1,16 @@
+use cli::TodoCli;
 use crate::terminal::Terminal;
-use console::style;
+use todos::Todos;
+mod cli;
 mod terminal;
 mod todo;
 mod todos;
 
 fn main() {
-    let mut terminal = Terminal::new();
+    let terminal = Terminal::new();
 
-    if let Err(error) = terminal.run() {
-        println!("{}", style(error.show_error()).red());
-    }
+    let todos = Todos::new();
+    let mut todo_cli = TodoCli::new(terminal, todos);
+
+    todo_cli.run();
 }
