@@ -47,7 +47,7 @@ impl Terminal {
 
         writeln!(
             self.stdout,
-            "{} {}",
+            "{:-^50} {}",
             style("Bem vindo ao TODO List").yellow().bold(),
             Emoji("🌈", "")
         )
@@ -220,8 +220,13 @@ impl Terminal {
         Ok(parsed_input)
     }
 
-    fn quit(&self) -> Result<(), TerminalError> {
-        println!("OK Finalizando o programa!");
+    fn quit(&mut self) -> Result<(), TerminalError> {
+        writeln!(
+            self.stdout,
+            "{:-^50} ",
+            style("OK Finalizando o programa!").blue().bold()
+        )
+        .map_err(TerminalError::Stdout)?;
         std::process::exit(0);
     }
 }
