@@ -7,10 +7,9 @@ mod todo;
 mod todos;
 
 fn main() {
-    let terminal = Terminal::new();
+    let user_interface = Box::new(Terminal::new());
+    let todo_storage = Box::new(Todos::new());
 
-    let todos = Todos::new();
-    let mut todo_cli = TodoCli::new(terminal, todos);
-
+    let mut todo_cli = TodoCli::new(user_interface, todo_storage);
     todo_cli.run();
 }
