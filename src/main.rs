@@ -1,5 +1,5 @@
-use cli::TodoCli;
 use crate::terminal::Terminal;
+use cli::TodoCli;
 use todos::Todos;
 mod cli;
 mod terminal;

@@ -1,7 +1,4 @@
-use crate::{
-    todo::Todo,
-    todos::{TodoStorage, Todos},
-};
+use crate::{todo::Todo, todos::TodoStorage};
 use console::{style, Emoji};
 use std::io::{Stdin, Stdout, Write};
 pub enum TerminalError {
@@ -46,19 +43,17 @@ pub trait UserInterface {
 
     fn remove_all_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
 
-    fn show_list(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
+    fn show_list(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError>;
 
     fn ask_for_new_todo(&mut self) -> Result<Option<Todo>, TerminalError>;
 
-    fn show_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
+    fn show_todos(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError>;
 
     fn quit(&mut self) -> Result<(), TerminalError>;
 }
 
 impl UserInterface for Terminal {
     fn run(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
-        let mut todos = Todos::new();
-
         writeln!(
             self.stdout,
             "{:-^50} {}",
@@ -71,7 +66,13 @@ impl UserInterface for Terminal {
             self.show_menu()?;
 
             match self.select_user_command() {
-                Ok(selected_command) => self.user_option(selected_command, &mut todos)?,
+                Ok(selected_command) => match selected_command {
+                    UserOption::NewTodo => self.new_todo(todos)?,
+                    UserOption::RemoveTodo => self.remove_todo(todos)?,
+                    UserOption::RemoveAllTodos => self.remove_all_todos(todos)?,
+                    UserOption::ShowList => self.show_list(todos.todo_list())?,
+                    UserOption::Quit => self.quit()?,
+                },
                 Err(_) => self.invalid_input()?,
             }
         }
@@ -98,12 +99,12 @@ impl UserInterface for Terminal {
 
     fn remove_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
         if todos.todo_list().is_empty() {
-            self.show_todos(todos)?;
+            self.show_todos(todos.todo_list())?;
             return Ok(());
         }
 
         println!("Qual TODO gostaria de remover?\n");
-        self.show_todos(todos)?;
+        self.show_todos(todos.todo_list())?;
 
         let selected_index = self.select_from_list(todos)?;
         todos.remove_todo(selected_index);
@@ -113,13 +114,13 @@ impl UserInterface for Terminal {
     }
 
     fn remove_all_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
-        self.show_todos(todos)?;
+        self.show_todos(todos.todo_list())?;
 
         todos.remove_all_todos();
         Ok(())
     }
 
-    fn show_list(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
+    fn show_list(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError> {
         self.show_todos(todos)?;
         Ok(())
     }
@@ -136,13 +137,13 @@ impl UserInterface for Terminal {
         Ok(Some(Todo::new(input)))
     }
 
-    fn show_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
-        if todos.todo_list().is_empty() {
+    fn show_todos(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError> {
+        if todos.is_empty() {
             writeln!(self.stdout, "{}", style("A lista está vazia!").red().bold())
                 .map_err(TerminalError::Stdout)?;
         }
 
-        for (index, todo) in todos.todo_list().iter().enumerate() {
+        for (index, todo) in todos.iter().enumerate() {
             writeln!(
                 self.stdout,
                 "{} - {}, ",
@@ -171,17 +172,6 @@ impl Terminal {
             stdin: std::io::stdin(),
             stdout: std::io::stdout(),
         }
-    }
-
-    fn user_option(&mut self, option: UserOption, todos: &mut Todos) -> Result<(), TerminalError> {
-        match option {
-            UserOption::NewTodo => self.new_todo(todos)?,
-            UserOption::RemoveTodo => self.remove_todo(todos)?,
-            UserOption::RemoveAllTodos => self.remove_all_todos(todos)?,
-            UserOption::ShowList => self.show_list(todos)?,
-            UserOption::Quit => self.quit()?,
-        }
-        Ok(())
     }
 
     fn invalid_input(&mut self) -> Result<(), TerminalError> {
