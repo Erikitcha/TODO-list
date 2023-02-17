@@ -15,7 +15,7 @@ pub trait TodoStorage {
 
 impl TodoStorage for Todos {
     fn todo_list(&mut self) -> &Vec<Todo> {
-        return &self.list;
+        &self.list
     }
 
     fn add_todo(&mut self, todo: Todo) {
@@ -23,7 +23,7 @@ impl TodoStorage for Todos {
     }
 
     fn get_todo(&mut self, index: usize) -> &Todo {
-        return self.list.get(index).unwrap();
+        self.list.get(index).unwrap()
     }
 
     fn remove_todo(&mut self, index: usize) {
@@ -37,8 +37,6 @@ impl TodoStorage for Todos {
 
 impl Todos {
     pub fn new() -> Todos {
-        Todos {
-            list: Vec::with_capacity(15),
-        }
+        Todos { list: Vec::new() }
     }
 }
