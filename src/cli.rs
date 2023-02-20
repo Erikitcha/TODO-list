@@ -1,5 +1,4 @@
-use crate::{terminal::UserInterface, todos::TodoStorage};
-use console::style;
+use crate::{terminal::{UserInterface, TerminalError, UserOption}, todos::TodoStorage};
 pub(crate) struct TodoCli {
     user_interface: Box<dyn UserInterface>,
     todo_storage: Box<dyn TodoStorage>,
@@ -12,9 +11,24 @@ impl TodoCli {
             todo_storage,
         }
     }
-    pub fn run(&mut self) {
-        if let Err(error) = self.user_interface.run(self.todo_storage.as_mut()) {
-            println!("{}", style(error.show_error()).red());
+
+    pub fn run(&mut self) -> Result<(), TerminalError> {
+
+        self.user_interface.show_hello();
+
+        loop {
+            self.user_interface.show_menu()?;
+
+            match self.user_interface.select_user_command() {
+                Ok(selected_command) => match selected_command {
+                    UserOption::NewTodo => self.user_interface.new_todo(self.todo_storage.as_mut())?,
+                    UserOption::RemoveTodo => self.user_interface.remove_todo(self.todo_storage.as_mut())?,
+                    UserOption::RemoveAllTodos => self.user_interface.remove_all_todos(self.todo_storage.as_mut())?,
+                    UserOption::ShowList => self.user_interface.show_list(self.todo_storage.as_mut().todo_list())?,
+                    UserOption::Quit => self.user_interface.quit()?,
+                },
+                Err(_) => self.user_interface.invalid_input()?,
+            }
         }
     }
 }
