@@ -35,7 +35,6 @@ pub struct Terminal {
 }
 
 pub trait UserInterface {
-    fn run(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
 
     fn new_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
 
@@ -49,34 +48,24 @@ pub trait UserInterface {
 
     fn show_todos(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError>;
 
+    fn show_menu(&mut self) -> Result<(), TerminalError>;
+
+    fn select_user_command(&self) -> Result<UserOption, TerminalError>;
+
+    fn invalid_input(&mut self) -> Result<(), TerminalError>;
+
+    fn show_hello(&mut self) -> Result<(), TerminalError>;
+
+    fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError>;
+
+    fn read_input(&self) -> Result<String, TerminalError>;
+
+    fn select_from_list(&self, todos: &mut dyn TodoStorage) -> Result<usize, TerminalError>;
+
     fn quit(&mut self) -> Result<(), TerminalError>;
 }
 
 impl UserInterface for Terminal {
-    fn run(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
-        writeln!(
-            self.stdout,
-            "{:-^50} {}",
-            style("Bem vindo ao TODO List").yellow().bold(),
-            Emoji("🌈", "")
-        )
-        .map_err(TerminalError::Stdout)?;
-
-        loop {
-            self.show_menu()?;
-
-            match self.select_user_command() {
-                Ok(selected_command) => match selected_command {
-                    UserOption::NewTodo => self.new_todo(todos)?,
-                    UserOption::RemoveTodo => self.remove_todo(todos)?,
-                    UserOption::RemoveAllTodos => self.remove_all_todos(todos)?,
-                    UserOption::ShowList => self.show_list(todos.todo_list())?,
-                    UserOption::Quit => self.quit()?,
-                },
-                Err(_) => self.invalid_input()?,
-            }
-        }
-    }
 
     fn new_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
         let new_todo = self.ask_for_new_todo()?;
@@ -93,7 +82,6 @@ impl UserInterface for Terminal {
             )
             .map_err(TerminalError::Stdout)?;
         }
-
         Ok(())
     }
 
@@ -155,56 +143,6 @@ impl UserInterface for Terminal {
         Ok(())
     }
 
-    fn quit(&mut self) -> Result<(), TerminalError> {
-        writeln!(
-            self.stdout,
-            "{:-^50} ",
-            style("OK Finalizando o programa!").blue().bold()
-        )
-        .map_err(TerminalError::Stdout)?;
-        std::process::exit(0);
-    }
-}
-
-impl Terminal {
-    pub fn new() -> Terminal {
-        Terminal {
-            stdin: std::io::stdin(),
-            stdout: std::io::stdout(),
-        }
-    }
-
-    fn invalid_input(&mut self) -> Result<(), TerminalError> {
-        writeln!(
-            self.stdout,
-            "{}",
-            style("\nPor favor, digite uma opção de 1 a 5.\n").red()
-        )
-        .map_err(TerminalError::Stdout)?;
-
-        Ok(())
-    }
-
-    fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
-        writeln!(
-            self.stdout,
-            "\nSua mensagem: {}",
-            style(&todo.message).green()
-        )
-        .map(|_| ())
-        .map_err(TerminalError::Stdout)
-    }
-
-    fn read_input(&self) -> Result<String, TerminalError> {
-        let mut buf = String::new();
-
-        self.stdin
-            .read_line(&mut buf)
-            .map_err(TerminalError::Stdin)?;
-
-        Ok(buf.trim().to_string())
-    }
-
     fn show_menu(&mut self) -> Result<(), TerminalError> {
         writeln!(
             self.stdout,
@@ -231,6 +169,49 @@ impl Terminal {
         }
     }
 
+    fn invalid_input(&mut self) -> Result<(), TerminalError> {
+        writeln!(
+            self.stdout,
+            "{}",
+            style("\nPor favor, digite uma opção de 1 a 5.\n").red()
+        )
+        .map_err(TerminalError::Stdout)?;
+
+        Ok(())
+    }
+
+    fn show_hello(&mut self) -> Result<(), TerminalError>{
+        writeln!(
+            self.stdout,
+            "{:-^50} {}",
+            style("Bem vindo ao TODO List").yellow().bold(),
+            Emoji("🌈", "")
+        )
+        .map_err(TerminalError::Stdout)?;
+
+        Ok(())
+    }
+
+    fn show_todo(&mut self, todo: &Todo) -> Result<(), TerminalError> {
+        writeln!(
+            self.stdout,
+            "\nSua mensagem: {}",
+            style(&todo.message).green()
+        )
+        .map(|_| ())
+        .map_err(TerminalError::Stdout)
+    }
+
+    fn read_input(&self) -> Result<String, TerminalError> {
+        let mut buf = String::new();
+
+        self.stdin
+            .read_line(&mut buf)
+            .map_err(TerminalError::Stdin)?;
+
+        Ok(buf.trim().to_string())
+    }
+
     fn select_from_list(&self, todos: &mut dyn TodoStorage) -> Result<usize, TerminalError> {
         let input = self.read_input()?;
         let size = todos.todo_list().len();
@@ -243,4 +224,25 @@ impl Terminal {
         }
         Ok(parsed_input)
     }
+
+    fn quit(&mut self) -> Result<(), TerminalError> {
+        writeln!(
+            self.stdout,
+            "{:-^50} ",
+            style("OK Finalizando o programa!").blue().bold()
+        )
+        .map_err(TerminalError::Stdout)?;
+        std::process::exit(0);
+    }
+
+}
+
+impl Terminal {
+    pub fn new() -> Terminal {
+        Terminal {
+            stdin: std::io::stdin(),
+            stdout: std::io::stdout(),
+        }
+    }
+
 }
