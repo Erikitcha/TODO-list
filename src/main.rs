@@ -1,7 +1,7 @@
 use crate::terminal::Terminal;
 use cli::TodoCli;
-use todos::Todos;
 use console::style;
+use todos::Todos;
 mod cli;
 mod terminal;
 mod todo;
@@ -16,5 +16,4 @@ fn main() {
     if let Err(error) = todo_cli.run() {
         println!("{}", style(error.show_error()).red());
     }
-
 }

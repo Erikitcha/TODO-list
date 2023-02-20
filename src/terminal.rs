@@ -35,7 +35,6 @@ pub struct Terminal {
 }
 
 pub trait UserInterface {
-
     fn new_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
 
     fn remove_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
@@ -66,7 +65,6 @@ pub trait UserInterface {
 }
 
 impl UserInterface for Terminal {
-
     fn new_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
         let new_todo = self.ask_for_new_todo()?;
 
@@ -180,7 +178,7 @@ impl UserInterface for Terminal {
         Ok(())
     }
 
-    fn show_hello(&mut self) -> Result<(), TerminalError>{
+    fn show_hello(&mut self) -> Result<(), TerminalError> {
         writeln!(
             self.stdout,
             "{:-^50} {}",
@@ -234,7 +232,6 @@ impl UserInterface for Terminal {
         .map_err(TerminalError::Stdout)?;
         std::process::exit(0);
     }
-
 }
 
 impl Terminal {
@@ -244,5 +241,4 @@ impl Terminal {
             stdout: std::io::stdout(),
         }
     }
-
 }
