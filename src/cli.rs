@@ -35,7 +35,7 @@ impl TodoCli {
                     UserOption::ShowList => self
                         .user_interface
                         .show_list(self.todo_storage.as_mut().todo_list())?,
-                    UserOption::ResolvedTodos => self
+                    UserOption::ListResolvedTodos => self
                         .user_interface
                         .list_resolved_todos(self.todo_storage.as_mut())?,
                     UserOption::ResolveTodo => self
