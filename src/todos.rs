@@ -11,6 +11,7 @@ pub trait TodoStorage {
     fn add_todo(&mut self, todo: Todo);
     fn remove_todo(&mut self, index: usize);
     fn remove_all_todos(&mut self);
+    fn resolve_todo(&mut self, index: usize);
 }
 
 impl TodoStorage for Todos {
@@ -32,6 +33,11 @@ impl TodoStorage for Todos {
 
     fn remove_all_todos(&mut self) {
         self.list.clear();
+    }
+
+    fn resolve_todo(&mut self, index: usize) {
+        let todo = self.get_todo(index);
+        todo.done = true;
     }
 }
 

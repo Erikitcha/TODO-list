@@ -13,7 +13,7 @@ pub enum UserOption {
     RemoveTodo,
     ShowList,
     RemoveAllTodos,
-    ResolvedTodos,
+    ListResolvedTodos,
     ResolveTodo,
     Quit,
 }
@@ -153,7 +153,18 @@ impl UserInterface for Terminal {
         writeln!(
             self.stdout,
             "{}",
-            style("\n1 - Adicionar novo TODO \n2 - Remover TODO \n3 - Listar TODOs \n4 - Esvaziar lista de TODOs \n5 - Lista de TODOs resolvidos \n6 - Resolver TODO \n7 - Sair\n").green()
+            style(
+                r"
+1 - Adicionar novo TODO
+2 - Remover TODO
+3 - Listar TODOs
+4 - Esvaziar lista de TODOs
+5 - Lista de TODOs resolvidos
+6 - Resolver TODO
+7 - Sair
+"
+            )
+            .green()
         )
         .map(|_| ())
         .map_err(TerminalError::Stdout)
@@ -170,7 +181,7 @@ impl UserInterface for Terminal {
             2 => Ok(UserOption::RemoveTodo),
             3 => Ok(UserOption::ShowList),
             4 => Ok(UserOption::RemoveAllTodos),
-            5 => Ok(UserOption::ResolvedTodos),
+            5 => Ok(UserOption::ListResolvedTodos),
             6 => Ok(UserOption::ResolveTodo),
             7 => Ok(UserOption::Quit),
             _ => Err(TerminalError::InvalidOption),
@@ -268,8 +279,7 @@ impl UserInterface for Terminal {
         )
         .map_err(TerminalError::Stdout)?;
         let selected_index = self.select_from_list(todos)?;
-        let selected_todo = todos.get_todo(selected_index);
-        selected_todo.done = true;
+        todos.resolve_todo(selected_index);
 
         writeln!(
             self.stdout,
