@@ -16,7 +16,7 @@ impl TodoCli {
     }
 
     pub fn run(&mut self) -> Result<(), TerminalError> {
-        self.user_interface.show_hello();
+        self.user_interface.show_hello()?;
 
         loop {
             self.user_interface.show_menu()?;
@@ -35,6 +35,13 @@ impl TodoCli {
                     UserOption::ShowList => self
                         .user_interface
                         .show_list(self.todo_storage.as_mut().todo_list())?,
+                    UserOption::ResolvedTodos => self
+                        .user_interface
+                        .list_resolved_todos(self.todo_storage.as_mut())?,
+                    UserOption::ResolveTodo => self
+                        .user_interface
+                        .resolve_todo(self.todo_storage.as_mut())?,
+
                     UserOption::Quit => self.user_interface.quit()?,
                 },
                 Err(_) => self.user_interface.invalid_input()?,

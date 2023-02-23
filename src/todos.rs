@@ -6,24 +6,24 @@ pub struct Todos {
 }
 
 pub trait TodoStorage {
-    fn todo_list(&mut self) -> &Vec<Todo>;
-    fn get_todo(&mut self, index: usize) -> &Todo;
+    fn todo_list(&mut self) -> &mut Vec<Todo>;
+    fn get_todo(&mut self, index: usize) -> &mut Todo;
     fn add_todo(&mut self, todo: Todo);
     fn remove_todo(&mut self, index: usize);
     fn remove_all_todos(&mut self);
 }
 
 impl TodoStorage for Todos {
-    fn todo_list(&mut self) -> &Vec<Todo> {
-        &self.list
+    fn todo_list(&mut self) -> &mut Vec<Todo> {
+        &mut self.list
     }
 
     fn add_todo(&mut self, todo: Todo) {
         self.list.push(todo);
     }
 
-    fn get_todo(&mut self, index: usize) -> &Todo {
-        self.list.get(index).unwrap()
+    fn get_todo(&mut self, index: usize) -> &mut Todo {
+        self.list.get_mut(index).unwrap()
     }
 
     fn remove_todo(&mut self, index: usize) {
