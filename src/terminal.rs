@@ -13,6 +13,8 @@ pub enum UserOption {
     RemoveTodo,
     ShowList,
     RemoveAllTodos,
+    ResolvedTodos,
+    ResolveTodo,
     Quit,
 }
 
@@ -60,6 +62,10 @@ pub trait UserInterface {
     fn read_input(&self) -> Result<String, TerminalError>;
 
     fn select_from_list(&self, todos: &mut dyn TodoStorage) -> Result<usize, TerminalError>;
+
+    fn list_resolved_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
+
+    fn resolve_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError>;
 
     fn quit(&mut self) -> Result<(), TerminalError>;
 }
@@ -120,7 +126,7 @@ impl UserInterface for Terminal {
         .map_err(TerminalError::Stdout)?;
 
         let input = self.read_input()?;
-        Ok(Some(Todo::new(input)))
+        Ok(Some(Todo::new(input, false)))
     }
 
     fn show_todos(&mut self, todos: &Vec<Todo>) -> Result<(), TerminalError> {
@@ -130,13 +136,15 @@ impl UserInterface for Terminal {
         }
 
         for (index, todo) in todos.iter().enumerate() {
-            writeln!(
-                self.stdout,
-                "{} - {}, ",
-                style(index).yellow().bold(),
-                style(todo.to_owned().message).yellow().bold()
-            )
-            .map_err(TerminalError::Stdout)?;
+            if !todo.done {
+                writeln!(
+                    self.stdout,
+                    "{} - {}, ",
+                    style(index).yellow().bold(),
+                    style(todo.to_owned().message).yellow().bold()
+                )
+                .map_err(TerminalError::Stdout)?;
+            }
         }
         Ok(())
     }
@@ -145,7 +153,7 @@ impl UserInterface for Terminal {
         writeln!(
             self.stdout,
             "{}",
-            style("\n1 - Adicionar novo Todo \n2 - Remover Todo \n3 - Listar Todos \n4 - Esvaziar lista \n5 - Sair\n").green()
+            style("\n1 - Adicionar novo TODO \n2 - Remover TODO \n3 - Listar TODOs \n4 - Esvaziar lista de TODOs \n5 - Lista de TODOs resolvidos \n6 - Resolver TODO \n7 - Sair\n").green()
         )
         .map(|_| ())
         .map_err(TerminalError::Stdout)
@@ -162,7 +170,9 @@ impl UserInterface for Terminal {
             2 => Ok(UserOption::RemoveTodo),
             3 => Ok(UserOption::ShowList),
             4 => Ok(UserOption::RemoveAllTodos),
-            5 => Ok(UserOption::Quit),
+            5 => Ok(UserOption::ResolvedTodos),
+            6 => Ok(UserOption::ResolveTodo),
+            7 => Ok(UserOption::Quit),
             _ => Err(TerminalError::InvalidOption),
         }
     }
@@ -221,6 +231,53 @@ impl UserInterface for Terminal {
             return Err(TerminalError::InvalidOption);
         }
         Ok(parsed_input)
+    }
+
+    fn list_resolved_todos(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
+        let resolved_todo_list: Vec<&Todo> =
+            todos.todo_list().iter().filter(|todo| todo.done).collect();
+
+        if resolved_todo_list.is_empty() {
+            writeln!(self.stdout, "{}", style("A lista está vazia!").red().bold())
+                .map_err(TerminalError::Stdout)?;
+        }
+
+        for (index, todo) in resolved_todo_list.into_iter().enumerate() {
+            writeln!(
+                self.stdout,
+                "{} - {}, ",
+                style(index).yellow().bold(),
+                style(todo.to_owned().message).yellow().bold()
+            )
+            .map_err(TerminalError::Stdout)?;
+        }
+        Ok(())
+    }
+
+    fn resolve_todo(&mut self, todos: &mut dyn TodoStorage) -> Result<(), TerminalError> {
+        if todos.todo_list().is_empty() {
+            self.show_todos(todos.todo_list())?;
+            return Ok(());
+        }
+
+        self.show_todos(todos.todo_list())?;
+        writeln!(
+            self.stdout,
+            "{}",
+            style("Escolha o Todo a ser resolvido:").blue()
+        )
+        .map_err(TerminalError::Stdout)?;
+        let selected_index = self.select_from_list(todos)?;
+        let selected_todo = todos.get_todo(selected_index);
+        selected_todo.done = true;
+
+        writeln!(
+            self.stdout,
+            "{}",
+            style("Todo resolvido com sucesso!").green()
+        )
+        .map_err(TerminalError::Stdout)?;
+        Ok(())
     }
 
     fn quit(&mut self) -> Result<(), TerminalError> {
